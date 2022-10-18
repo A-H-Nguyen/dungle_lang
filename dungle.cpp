@@ -1,65 +1,49 @@
+//TODO: Refactor this in C, lol
+
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 #include <cstring>
 
-char parseChar(std::string line)
+char parseData(std::string line)
 {
-	line.erase(0,1);
+	line.erase(0,6);
 	std::string subline;
 
-	uint16_t dungleline = 0x0000;
-	uint16_t mask 	    = 0x0080;
+	short dungleline = 0x0000;
+	short mask	 = 0x0080;
 
-	for(int i = 0; i < 8; i++)
+	for(int i = 1; i < 8; i++)
 	{
 		subline = line.substr(0,6);
-		if(subline == "Dongle")
+		std::cout << subline << std::endl;
+		if(subline == "Dingle")
 		{
 			dungleline = dungleline | (mask>>i);
-		}
-		else if(subline == "Dingle")
-		{
-			dungleline = dungleline | 0x0000;
-		}
-		else
-		{
-			break;
 		}
 		line.erase(0,6);
 	}
 	return char(dungleline);
 }
-
-short parseInt(std::string line)
+/*
+void execDungCmd(char cmd)
 {
-	line.erase(0,1);
-	std::string subline;
-
-	uint16_t dungleline = 0x0000;
-	uint16_t mask 	    = 0x0080;
-
-	for(int i = 0; i < 8; i++)
+	char op = cmd & 0xF0;
+	switch(op)
 	{
-		subline = line.substr(0,6);
-		if(subline == "Dongle")
-		{
-			dungleline = dungleline | (mask>>i);
-		}
-		else if(subline == "Dingle")
-		{
-			dungleline = dungleline | 0x0000;
-		}
-		else
-		{
-			break;
-		}
-		line.erase(0,6);
+		case 0x80:	//
+		case 0x90:
+		case 0xA0:
+		case 0xB0:
+		case 0xC0:
+		case 0xD0:
+		case 0xE0:
+		case 0xF0:
 	}
-	return short(dungleline);
 }
-
+*/
 int main(int argc, char *argv[])
 {
 	if(argc != 2)
@@ -68,14 +52,14 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	std::vector<std::string> inputCode;
-	std::vector<char> dungChars;
-	std::vector<short> dungInts;
 
 	std::string filename(argv[1]);
-	std::string line;
 
-	std::string newdung;
+	std::string line;
+	char active;
+	char command;
+
+	char *DungData = new char[0x7F];
 
 	std::ifstream file;
 	file.open(filename);
@@ -85,25 +69,27 @@ int main(int argc, char *argv[])
 		while(file)
 		{
 			std::getline(file, line);
-			inputCode.push_back(line);
-
-			if(line.find("!") != std::string::npos)
+			if(line.find("DUNG: ") != std::string::npos) 		//store data in "active"
 			{
-				dungChars.push_back(parseChar(line));
+				std::cout << line << std::endl;
+				active = parseData(line);
+				std::cout << std::hex << uint16_t(active) << std::endl;
 			}
-
-			if(line.find("#") != std::string::npos)
+			else if(line.find("D!NG: ") != std::string::npos)	//execute dungle command
 			{
-				dungInts.push_back(parseInt(line));
+				//command = parseData(line);
+				//execDungCmd(command);
+				std::cout << "hoi\n";
 			}
+			else continue;
 		}	
 		file.close();
 	}
 
-	for(int i = 0; i < dungChars.size(); i++) printf("%c", dungChars.at(i));
-	std::cout << std::endl;
-	for(int i = 0; i < dungInts.size(); i++) printf("%d", dungInts.at(i)); 
-	std::cout << std::endl;
+	//for(int i = 0; i < dungChars.size(); i++) printf("%c", dungChars.at(i));
+	//std::cout << std::endl;
+	//for(int i = 0; i < dungInts.size(); i++) printf("%d", dungInts.at(i)); 
+	//std::cout << std::endl;
 
 	return 0;
 }
