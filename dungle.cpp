@@ -7,43 +7,60 @@
 #include <vector>
 #include <cstring>
 
-char parseData(std::string line)
+uint8_t parseData(std::string line, uint8_t MSB)
 {
 	line.erase(0,6);
 	std::string subline;
 
-	short dungleline = 0x0000;
-	short mask	 = 0x0080;
+	uint8_t dungleline = MSB;
+	uint8_t mask	   = 0x80;
 
 	for(int i = 1; i < 8; i++)
 	{
 		subline = line.substr(0,6);
-		std::cout << subline << std::endl;
-		if(subline == "Dingle")
-		{
-			dungleline = dungleline | (mask>>i);
-		}
+		if(subline == "Dingle")	dungleline = dungleline | (mask>>i);
 		line.erase(0,6);
 	}
-	return char(dungleline);
+
+	return dungleline;
 }
-/*
-void execDungCmd(char cmd)
+
+void execDungCmd(uint8_t cmd, uint8_t *regs)
 {
-	char op = cmd & 0xF0;
+	uint8_t    op = cmd & 0xF0;
+	uint8_t param = cmd & 0x0F;
+
 	switch(op)
 	{
-		case 0x80:	//
-		case 0x90:
-		case 0xA0:
-		case 0xB0:
-		case 0xC0:
-		case 0xD0:
-		case 0xE0:
-		case 0xF0:
+		case 0x80:	// add value in active reg to mem addr [param]
+			regs[param] = regs[param] + regs[0x0F];
+			break;
+		case 0x90:	// add immediate value to active reg
+			regs[0x0F] = regs[0x0F] + param;
+			break;
+		case 0xA0:	// left shit value at addr [param]
+			regs[param] = regs[param]<<1;
+			break;
+		case 0xB0:	// right shift value ar add [param]
+			regs[param] = regs[param]>>1;
+			break;
+		case 0xC0:	// XOR value at addr [param] with value in active reg
+			regs[param] = regs[param] ^ regs[0x0F];
+			break;
+		case 0xD0:	// OR value at addr [param] with value in active reg
+			regs[param] = regs[param] | regs[0x0F];
+			break;
+		case 0xE0:	// AND value at addr [param] with value in active reg
+			regs[param] = regs[param] & regs[0x0F];
+			break;
+		case 0xF0:	// print value at addr [param]
+			std::cout << regs[param] << std::endl;
+			break;
+		default:
+			std::cout << "Invalid Command: " << std::hex << unsigned(cmd) << std::endl;
 	}
 }
-*/
+
 int main(int argc, char *argv[])
 {
 	if(argc != 2)
@@ -56,10 +73,10 @@ int main(int argc, char *argv[])
 	std::string filename(argv[1]);
 
 	std::string line;
-	char active;
-	char command;
 
-	char *DungData = new char[0x7F];
+	uint8_t *DungData = new uint8_t[0x10];	//want addresses 0x00-0x0F
+	for(uint8_t i = 0; i < 0x10; i++)	
+		DungData[i] = 0;		//initialize our 15 registers
 
 	std::ifstream file;
 	file.open(filename);
@@ -69,27 +86,21 @@ int main(int argc, char *argv[])
 		while(file)
 		{
 			std::getline(file, line);
-			if(line.find("DUNG: ") != std::string::npos) 		//store data in "active"
-			{
-				std::cout << line << std::endl;
-				active = parseData(line);
-				std::cout << std::hex << uint16_t(active) << std::endl;
-			}
-			else if(line.find("D!NG: ") != std::string::npos)	//execute dungle command
-			{
-				//command = parseData(line);
-				//execDungCmd(command);
-				std::cout << "hoi\n";
-			}
+			if(line.find("Dongle") != std::string::npos ||
+				line.find("Dingle") != std::string::npos)
+				if(line.substr(0,6) == "Dongle") 		//store data in "active"
+				{
+					DungData[0x0F] = parseData(line, 0x00);
+					//std::cout << std::hex << short(DungData[0x0F]) << std::endl;
+				}
+				else if(line.substr(0,6) == "Dingle")		//execute dungle command
+				{
+					execDungCmd(parseData(line, 0x80), DungData);
+				}
 			else continue;
 		}	
 		file.close();
 	}
-
-	//for(int i = 0; i < dungChars.size(); i++) printf("%c", dungChars.at(i));
-	//std::cout << std::endl;
-	//for(int i = 0; i < dungInts.size(); i++) printf("%d", dungInts.at(i)); 
-	//std::cout << std::endl;
-
+	std::cout << std::endl;
 	return 0;
 }
