@@ -15,5 +15,5 @@ I'm not even trying to be Turing anything.
 This is actively spitting in the face of Turing.
 "Hello World" in this language is disgusting, it is literally 10 lines long.
 
-*I didn't put a license on this code, because why would I? So please just don't steal it, though I REALLY do not know who would actually try to steal something this awful and stupid.
+*I put a license on this code, because why wouldn't I? So please just don't steal it without crediting me, though I REALLY do not know who would actually try to steal something this awful and stupid.
 However, if you did, I would really just want to know why.*
